@@ -18,3 +18,5 @@ coverage/
 playwright-report/
 test-results/
 .DS_Store
+*.tsbuildinfo
+pytest-cache-files-*/
