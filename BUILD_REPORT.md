@@ -20,6 +20,13 @@ evidence-backed change impact. The original Apache-2.0 license is byte-for-byte 
   209 explicitly reported resolution/extraction limitations. This is an observed test,
   not a benchmark. Source was not checked out or executed.
 - Dark/light UI screenshots were inspected; fixtures are labeled in README.md.
+- The local analysis helper was smoke-tested against committed DevLens source, including
+  impact output and rejection of a missing target and a non-repository directory.
+- [GitHub CI](https://github.com/dhaneshit008/devlens/actions/runs/34607929678) passed for
+  `a3ab49c3f3712c3889b66e12dc5c87df4bf4e080`: backend checks with PostgreSQL migration
+  round trips, frontend checks, Chromium browser tests, and Docker build/startup with
+  API and web connectivity. [CodeQL](https://github.com/dhaneshit008/devlens/actions/runs/34607929713)
+  passed for Python and JavaScript/TypeScript at the same commit.
 
 ## Architecture
 
@@ -60,12 +67,18 @@ limits; same-origin browser checks; deletion support; non-root constrained conta
 The service is unauthenticated and local-only. Compose PostgreSQL trust authentication
 is restricted to its internal development network and must be replaced before shared hosting.
 
-## Environment limits and next gate
+## Environment limits and remaining gate
 
 Docker and PostgreSQL executables were unavailable on the local Windows machine.
-SQLite migrations and persistence were tested locally; CI supplies PostgreSQL and Docker
-startup tests. Do not describe these external checks as passed until their run is verified.
+SQLite migrations and persistence were tested locally; PostgreSQL and Docker startup
+were subsequently verified by the successful GitHub CI run linked above.
 Two upstream Python test-client deprecation warnings remain; they are not test failures.
 
-The next highest-priority gate is successful CI for the PostgreSQL/container paths, followed
-by broader import-resolution fixtures and harder worker isolation before a public release.
+[Dependency review](https://github.com/dhaneshit008/devlens/actions/runs/34607931334) is
+blocked by repository configuration: GitHub reports that Dependency graph must be enabled.
+The authenticated CLI can push, but the available browser is not signed in to change this
+setting. Enable Dependency graph in repository Settings → Advanced Security, then rerun
+the failed dependency-review job. The workflow remains enforced; it has not been skipped.
+
+Broader import-resolution fixtures and harder worker isolation remain priorities before
+a public release.
