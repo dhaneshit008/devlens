@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: devlens
+      POSTGRES_USER: devlens
+      # Local disposable development database. No host port is published.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devlens -d devlens"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [database]
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://devlens@db:5432/devlens
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["127.0.0.1:8000:8000"]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 128
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    networks: [default, database]
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on: [api]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+volumes:
+  postgres_data:
+networks:
+  database:
+    internal: true
