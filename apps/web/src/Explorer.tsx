@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
   ChevronLeft,
@@ -35,6 +35,7 @@ export default function Explorer({
   const [impactRequest, setImpactRequest] = useState<{
     target: string;
     sequence: number;
+    offset: number;
   } | null>(null);
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("file");
@@ -93,7 +94,7 @@ export default function Explorer({
     setImpactLoading(true);
     const controller = new AbortController();
     void api<ImpactReport>(
-      `/analysis/${run.id}/impact?target=${encodeURIComponent(impactRequest.target)}`,
+      `/analysis/${run.id}/impact?target=${encodeURIComponent(impactRequest.target)}&offset=${impactRequest.offset}&limit=50`,
       { signal: controller.signal },
     )
       .then((data) => {
@@ -124,12 +125,12 @@ export default function Explorer({
     [report],
   );
 
-  function choose(node: GraphNode) {
+  const choose = useCallback((node: GraphNode) => {
     setSelected(node);
     setReport(null);
     setImpactLoading(false);
     setImpactRequest(null);
-  }
+  }, []);
 
   if (!run.summary) return null;
   return (
@@ -154,7 +155,7 @@ export default function Explorer({
                 setSearch(e.target.value);
                 setOffset(0);
               }}
-              placeholder="Search files or symbols…"
+              placeholder="Name, layer:domain, type:class, cycle:true…"
             />
           </label>
           <select
@@ -314,6 +315,7 @@ export default function Explorer({
                     setImpactRequest({
                       target: selected.id,
                       sequence: Date.now(),
+                      offset: 0,
                     })
                   }
                 >
@@ -322,7 +324,37 @@ export default function Explorer({
                     ? "Tracing imports…"
                     : "Simulate change impact"}
                 </button>
-                {report && <ImpactPanel report={report} run={run} />}
+                {report && (
+                  <>
+                    <ImpactPanel report={report} run={run} />
+                    <div className="audit-pagination">
+                      <button
+                        disabled={!report.offset}
+                        onClick={() =>
+                          setImpactRequest({
+                            target: selected.id,
+                            sequence: Date.now(),
+                            offset: Math.max(0, (report.offset ?? 0) - 50),
+                          })
+                        }
+                      >
+                        Previous dependents
+                      </button>
+                      <button
+                        disabled={!report.truncated}
+                        onClick={() =>
+                          setImpactRequest({
+                            target: selected.id,
+                            sequence: Date.now(),
+                            offset: (report.offset ?? 0) + 50,
+                          })
+                        }
+                      >
+                        Next dependents
+                      </button>
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <div className="selection-empty">
@@ -346,15 +378,19 @@ export default function Explorer({
       <details className="limitations">
         <summary>
           Analysis coverage & limitations{" "}
-          <span>{graph?.limitations.length ?? "…"} observations</span>
+          <span>
+            {graph?.limitations_total ?? graph?.limitations.length ?? "…"}{" "}
+            observations
+          </span>
         </summary>
         <p>
           Skipped entries:{" "}
           {Object.entries(run.summary.skipped)
             .map(([key, value]) => `${value} ${key.replaceAll("_", " ")}`)
             .join(" · ") || "None"}
-          . CommonJS, path aliases, runtime calls and external-package internals
-          are not resolved.
+          . Computed imports, ambiguous bindings, runtime calls and
+          external-package internals may remain unresolved. Open Architecture →
+          Limitations for the full paginated report.
         </p>
         {graph?.limitations.map((item, index) => (
           <div className="limitation" key={`${item.path}:${index}`}>

@@ -1077,3 +1077,229 @@ summary {
     animation: none;
   }
 }
+
+.section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0;
+}
+.section-tabs button {
+  font-size: 13px;
+  padding: 10px 16px;
+}
+.section-tabs button[aria-pressed="true"] {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.architecture-section {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.architecture-section h2 {
+  font-size: 20px;
+}
+.architecture-section h3 {
+  margin: 20px 0 12px;
+  overflow-wrap: anywhere;
+}
+.analysis-facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 22px 0;
+}
+.analysis-facts > div {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--panel);
+}
+.analysis-facts strong {
+  font-size: 23px;
+}
+.analysis-facts span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.architecture-map {
+  height: 420px;
+  margin: 20px 0 42px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.architecture-map .react-flow__node {
+  background: var(--raised);
+  color: var(--text);
+  border-color: var(--muted);
+  white-space: pre-line;
+  font-size: 13px;
+}
+.architecture-map .react-flow__edge-text {
+  fill: var(--text);
+}
+.architecture-map .react-flow__edge-textbg {
+  fill: var(--panel);
+}
+.audit-table {
+  overflow: auto;
+  max-width: 100%;
+  margin: 18px 0;
+}
+.audit-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.audit-table caption {
+  text-align: left;
+  padding: 10px 0;
+  color: var(--muted);
+}
+.audit-table th,
+.audit-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 12px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  min-width: 95px;
+}
+.audit-table th {
+  font-size: 12px;
+  color: var(--muted);
+}
+.audit-table td small {
+  display: block;
+  color: var(--accent);
+}
+.audit-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.audit-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  max-width: 100%;
+}
+.audit-filters input,
+.audit-filters select {
+  min-height: 38px;
+}
+.audit-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  font-size: 12px;
+}
+.source-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+.source-card {
+  min-width: 0;
+  padding: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.source-card pre {
+  overflow: auto;
+  padding: 12px;
+  line-height: 1.8;
+  background: var(--accent-bg);
+  color: var(--text);
+}
+.source-line {
+  display: block;
+  font-size: 12px;
+}
+.line-number {
+  display: inline-block;
+  min-width: 3em;
+  color: var(--muted);
+  user-select: none;
+}
+.evidence-panel {
+  border-top: 1px solid var(--border);
+  margin-top: 28px;
+  padding-top: 8px;
+  overflow-wrap: anywhere;
+}
+.cycle-list,
+.limitation-list {
+  padding-left: 22px;
+}
+.cycle-list li,
+.limitation-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.limitation-list code {
+  display: block;
+  color: var(--muted);
+}
+.impact-context {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+}
+.mobile-run-picker {
+  display: none;
+}
+@media (max-width: 900px) {
+  .analysis-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .source-pair {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .mobile-run-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .mobile-run-picker select {
+    width: 100%;
+  }
+  .architecture-section {
+    padding: 14px;
+  }
+  .architecture-map {
+    height: 320px;
+  }
+  .section-tabs button {
+    padding: 10px;
+    font-size: 12px;
+  }
+  .audit-table {
+    font-size: 12px;
+  }
+  .audit-filters label {
+    flex: 1 1 140px;
+  }
+}

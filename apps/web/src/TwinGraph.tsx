@@ -64,7 +64,22 @@ export default function TwinGraph({
     [graph.edges, affected],
   );
   return (
-    <div className="graph-canvas" aria-label="Interactive repository graph">
+    <div
+      className="graph-canvas"
+      aria-label="Interactive repository graph"
+      onKeyDownCapture={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const element = event.target as HTMLElement;
+        const id = element
+          .closest(".react-flow__node")
+          ?.getAttribute("data-id");
+        const node = graph.nodes.find((item) => item.id === id);
+        if (node) {
+          event.preventDefault();
+          onSelect(node);
+        }
+      }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}

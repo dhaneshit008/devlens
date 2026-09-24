@@ -45,7 +45,10 @@ test("public URL → committed analysis → graph → impact evidence → deleti
   await expect(
     page.getByRole("region", { name: "Impact results" }),
   ).toBeVisible();
-  await page.getByText("tests/service.test.ts", { exact: true }).click();
+  await page
+    .locator(".impact-entry")
+    .getByText("tests/service.test.ts", { exact: true })
+    .click();
   await expect(
     page.getByRole("link", { name: "Line 1", exact: false }).first(),
   ).toBeVisible();

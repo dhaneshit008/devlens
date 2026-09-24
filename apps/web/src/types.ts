@@ -3,6 +3,7 @@ export interface Evidence {
   start_line: number;
   end_line: number;
   method: string;
+  snippet?: { number: number; text: string }[];
 }
 export interface GraphNode {
   id: string;
@@ -21,6 +22,7 @@ export interface GraphEdge {
   evidence: Evidence;
 }
 export interface Limitation {
+  category?: string;
   path: string;
   line: number;
   reason: string;
@@ -35,6 +37,7 @@ export interface GraphData {
   truncated: boolean;
   commit_sha: string;
   limitations: Limitation[];
+  limitations_total?: number;
 }
 export interface Run {
   id: string;
@@ -53,12 +56,24 @@ export interface Run {
   };
 }
 export interface ImpactEntry {
+  path_truncated?: boolean;
   node: GraphNode;
   distance: number;
   classification: string;
   evidence_path: GraphEdge[];
 }
 export interface ImpactReport {
+  direct_count?: number;
+  indirect_count?: number;
+  total?: number;
+  offset?: number;
+  limit?: number;
+  truncated?: boolean;
+  affected_layers?: string[];
+  affected_cycles?: string[];
+  affected_violations?: string[];
+  affected_rules?: string[];
+  outgoing_dependencies?: string[];
   target: GraphNode;
   scope: string;
   direct: ImpactEntry[];

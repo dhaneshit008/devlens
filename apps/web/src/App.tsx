@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import RepositoryForm from "./RepositoryForm";
 import Explorer from "./Explorer";
+import Architecture from "./Architecture";
 import { api, type Run } from "./types";
 
 export default function App() {
@@ -26,7 +27,10 @@ export default function App() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("devlens-theme") ?? "dark",
   );
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [section, setSection] = useState<"explorer" | "architecture">(
+    "explorer",
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -92,11 +96,11 @@ export default function App() {
   }
 
   async function remove() {
-    if (!run) return;
+    if (!run || confirmDelete !== run.id) return;
     try {
-      await api(`/analysis/${run.id}`, { method: "DELETE" });
+      await api(`/analysis/${confirmDelete}`, { method: "DELETE" });
       setRun(null);
-      setConfirmDelete(false);
+      setConfirmDelete(null);
       await refreshRuns();
     } catch (e) {
       setError((e as Error).message);
@@ -138,6 +142,7 @@ export default function App() {
                 className={item.id === run?.id ? "run active" : "run"}
                 onClick={() => {
                   setRun(item);
+                  setConfirmDelete(null);
                   setError("");
                 }}
               >
@@ -204,6 +209,28 @@ export default function App() {
               <CheckCircle2 size={14} /> Deterministic analysis
             </span>
           </div>
+          <label className="mobile-run-picker">
+            Recent analyses
+            <select
+              aria-label="Recent analyses"
+              value={run?.id ?? ""}
+              onChange={(event) => {
+                setRun(
+                  runs.find((item) => item.id === event.target.value) ?? null,
+                );
+                setConfirmDelete(null);
+                setError("");
+              }}
+            >
+              <option value="">Choose an analysis</option>
+              {runs.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.repository_url.split("/").slice(-2).join("/")} ·{" "}
+                  {item.status}
+                </option>
+              ))}
+            </select>
+          </label>
           <RepositoryForm onAnalyze={start} busy={Boolean(running)} />
           {error && (
             <div className="notice error" role="alert">
@@ -221,6 +248,20 @@ export default function App() {
           {run?.status === "failed" && (
             <div className="notice error" role="alert">
               {run.error}
+            </div>
+          )}
+          {run?.status === "failed" && (
+            <button onClick={() => setConfirmDelete(run.id)}>
+              Delete failed analysis
+            </button>
+          )}
+          {confirmDelete === run?.id && (
+            <div className="notice">
+              <span>Delete this stored analysis and graph?</span>
+              <button onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="danger" onClick={() => void remove()}>
+                Delete permanently
+              </button>
             </div>
           )}
           {run?.summary ? (
@@ -252,23 +293,12 @@ export default function App() {
                   <button
                     className="icon-button"
                     aria-label="Delete analysis"
-                    onClick={() => setConfirmDelete(true)}
+                    onClick={() => setConfirmDelete(run.id)}
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
-              {confirmDelete && (
-                <div className="notice">
-                  <span>Delete this stored analysis and graph?</span>
-                  <button onClick={() => setConfirmDelete(false)}>
-                    Cancel
-                  </button>
-                  <button className="danger" onClick={() => void remove()}>
-                    Delete permanently
-                  </button>
-                </div>
-              )}
               <div className="metrics">
                 <div>
                   <span>
@@ -311,7 +341,25 @@ export default function App() {
                   </small>
                 </div>
               </div>
-              <Explorer key={run.id} run={run} setError={setError} />
+              <nav className="section-tabs" aria-label="Repository sections">
+                <button
+                  aria-pressed={section === "explorer"}
+                  onClick={() => setSection("explorer")}
+                >
+                  Repository explorer
+                </button>
+                <button
+                  aria-pressed={section === "architecture"}
+                  onClick={() => setSection("architecture")}
+                >
+                  Architecture
+                </button>
+              </nav>
+              {section === "explorer" ? (
+                <Explorer key={run.id} run={run} setError={setError} />
+              ) : (
+                <Architecture key={run.id} run={run} />
+              )}
             </>
           ) : (
             !running && (
