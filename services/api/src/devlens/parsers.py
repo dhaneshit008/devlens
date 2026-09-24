@@ -181,7 +181,15 @@ def parse_javascript(source: SourceFile) -> ParsedFile:
     require_shadowed = False
     while check:
         candidate = check.pop()
-        if candidate.type == "identifier" and text(candidate) == "require":
+        if (
+            candidate.type
+            in {
+                "identifier",
+                "shorthand_property_identifier",
+                "shorthand_property_identifier_pattern",
+            }
+            and text(candidate) == "require"
+        ):
             parent = candidate.parent
             if (
                 not parent

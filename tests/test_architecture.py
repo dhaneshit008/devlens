@@ -110,7 +110,12 @@ def test_commonjs_static_dynamic_and_shadowed_require():
     )
     assert [i.specifier for i in parsed.imports] == ["./x"]
     assert len(parsed.limitations) == 1
-    for code in ("function f(require) { require('./x'); }", "const require = f; require('./x');"):
+    for code in (
+        "function f(require) { require('./x'); }",
+        "const require = f; require('./x');",
+        "const { require } = loader; require('./x');",
+        "function f({ require }) { require('./x'); }",
+    ):
         parsed = parse(SourceFile("a.js", "JavaScript", code))
         assert not parsed.imports and parsed.limitations
     assert (
