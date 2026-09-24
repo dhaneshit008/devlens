@@ -129,12 +129,21 @@ The fixture is an isolated test adapter, not fabricated production analysis.
 
 Local verification on 2026-09-24: **50 Python tests, 10 component tests and 4 Chromium E2E
 tests passed**. Ruff lint/format, strict mypy (16 source modules), frontend lint/typecheck,
-Python wheel/sdist and frontend production build passed. Two upstream Python test-client
+Python wheel/sdist and frontend production build passed. The rebuilt source archive was
+inspected for Alembic configuration/migrations, requirements and test fixtures; the wheel
+was inspected for the new architecture modules. Two upstream Python test-client
 deprecation warnings remain. Sandbox process/temp-directory restrictions required approved
 native test execution; those startup errors were environmental, not suppressed assertions.
 
-Docker and PostgreSQL executables are unavailable locally. Feature-branch remote CI status
-will be recorded after verification; previous-main CI is not evidence for these changes.
+Docker and PostgreSQL executables are unavailable locally. Feature-branch
+[CI](https://github.com/dhaneshit008/devlens/actions/runs/35975203811) and
+[CodeQL](https://github.com/dhaneshit008/devlens/actions/runs/35975203809) passed for
+`b2dd09f42df903f01f53a55168facee0f7f662b3`: PostgreSQL migration round trips, backend/frontend
+checks, all browser tests, Docker build/startup and healthy API/web connectivity. Both
+Python and JavaScript/TypeScript CodeQL jobs passed; the branch alert query returned no
+open findings. The remote SHA was checked directly. A final parser regression also covers
+destructured `require` bindings; its targeted test, lint and strict typing passed locally.
+Subsequent commit/check state is available in the branch's Actions history.
 CodeQL is configured for feature branches and PRs. CI display names now match protected
 main's required contexts (`CI / backend`, `CI / frontend`, `CI / browser`, `CI / containers`).
 No protection was weakened. The prior dependency-review prerequisite in this report is
