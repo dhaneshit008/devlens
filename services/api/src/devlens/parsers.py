@@ -19,6 +19,7 @@ class ImportReference:
     end_line: int
     level: int = 0
     names: list[str] = field(default_factory=list)
+    mechanism: str = "AST import"
 
 
 @dataclass
@@ -26,6 +27,7 @@ class ParsedFile:
     symbols: list[GraphNode] = field(default_factory=list)
     imports: list[ImportReference] = field(default_factory=list)
     limitations: list[Limitation] = field(default_factory=list)
+    bindings: set[str] = field(default_factory=set)
 
 
 def declaration(
@@ -62,7 +64,12 @@ def parse_python(source: SourceFile) -> ParsedFile:
         return result
 
     def visit(node: ast.AST, parent: ast.AST | None = None) -> None:
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            result.bindings.add(node.id)
+        if isinstance(node, ast.alias):
+            result.bindings.add(node.asname or node.name.split(".")[0])
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            result.bindings.add(node.name)
             kind: Literal["function", "class", "method", "interface"] = "function"
             if isinstance(node, ast.ClassDef):
                 kind = "class"
@@ -142,7 +149,7 @@ def parse_javascript(source: SourceFile) -> ParsedFile:
     def text(node: Node | None) -> str:
         return data[node.start_byte : node.end_byte].decode("utf-8") if node else ""
 
-    def add_import(node: Node, literal: Node | None) -> None:
+    def add_import(node: Node, literal: Node | None, mechanism: str = "ES literal import") -> None:
         if literal is None or literal.type != "string":
             result.limitations.append(
                 Limitation(
@@ -163,9 +170,26 @@ def parse_javascript(source: SourceFile) -> ParsedFile:
             )
             return
         result.imports.append(
-            ImportReference(raw, node.start_point.row + 1, node.end_point.row + 1)
+            ImportReference(
+                raw, node.start_point.row + 1, node.end_point.row + 1, mechanism=mechanism
+            )
         )
 
+    # A binding or non-call reference anywhere makes require uncertain. This deliberately
+    # rejects some valid calls rather than treating a locally supplied function as Node's require.
+    check = [tree.root_node]
+    require_shadowed = False
+    while check:
+        candidate = check.pop()
+        if candidate.type == "identifier" and text(candidate) == "require":
+            parent = candidate.parent
+            if (
+                not parent
+                or parent.type != "call_expression"
+                or parent.child_by_field_name("function") != candidate
+            ):
+                require_shadowed = True
+        check.extend(candidate.named_children)
     stack = [tree.root_node]
     kinds: dict[str, Literal["function", "class", "method", "interface"]] = {
         "function_declaration": "function",
@@ -213,6 +237,8 @@ def parse_javascript(source: SourceFile) -> ParsedFile:
             literal = node.child_by_field_name("source")
             if literal:
                 add_import(node, literal)
+        elif node.type == "import_require_clause":
+            add_import(node, node.child_by_field_name("source"), "TypeScript import-equals literal")
         elif node.type == "call_expression":
             function = node.child_by_field_name("function")
             if function and text(function) in {"require", "import"}:
@@ -221,17 +247,23 @@ def parse_javascript(source: SourceFile) -> ParsedFile:
                     arguments.named_children[0] if arguments and arguments.named_children else None
                 )
                 # require may be shadowed; preserve it as unresolved rather than a confirmed edge.
-                if text(function) == "require":
+                if text(function) == "require" and require_shadowed:
                     result.limitations.append(
                         Limitation(
                             path=source.path,
                             line=node.start_point.row + 1,
-                            reason="CommonJS require is not resolved (binding may be shadowed).",
+                            reason="CommonJS require is unresolved: ambiguous binding.",
                             specifier=text(literal),
                         )
                     )
                 else:
-                    add_import(node, literal)
+                    add_import(
+                        node,
+                        literal,
+                        "CommonJS static require (unshadowed)"
+                        if text(function) == "require"
+                        else "ES literal dynamic import",
+                    )
         stack.extend(reversed(node.named_children))
     return result
 

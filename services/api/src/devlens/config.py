@@ -1,4 +1,4 @@
-"""Explicit local-service configuration; never load repository configuration."""
+"""Explicit local-service configuration; separate from data-only analyzed repository rules."""
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     max_analysis_seconds: int = 180
     max_graph_nodes: int = 20000
     max_graph_edges: int = 50000
+    allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
 
 
 settings = Settings()

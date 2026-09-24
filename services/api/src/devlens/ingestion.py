@@ -9,7 +9,7 @@ import tempfile
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -185,9 +185,11 @@ class RepositorySource:
     commit_sha: str
     files: list[SourceFile]
     skipped: dict[str, int]
+    configs: dict[str, str] = field(default_factory=dict)
 
 
 def read_sources(repo: Path, limits: Settings) -> RepositorySource:
+    started = time.monotonic()
     sha = git_read(repo, "rev-parse", "HEAD").decode().strip()
     # ls-tree reads metadata only; no paths from the repository become filesystem writes.
     entries = git_read(repo, "ls-tree", "-r", "-l", "-z", "HEAD").split(b"\0")
@@ -196,11 +198,15 @@ def read_sources(repo: Path, limits: Settings) -> RepositorySource:
     files: list[SourceFile] = []
     skipped: dict[str, int] = {}
     total = 0
+    configs: dict[str, str] = {}
+    config_bytes = 0
 
     def skip(reason: str) -> None:
         skipped[reason] = skipped.get(reason, 0) + 1
 
     for entry in entries:
+        if time.monotonic() - started > limits.max_analysis_seconds:
+            raise IngestionError("Repository source reading exceeded the time limit.")
         if not entry:
             continue
         metadata, raw_path = entry.split(b"\t", 1)
@@ -224,6 +230,18 @@ def read_sources(repo: Path, limits: Settings) -> RepositorySource:
         if any(part in IGNORED for part in parts):
             skip("generated_or_vendor")
             continue
+        if path == ".devlens.json" or parts[-1] == "tsconfig.json":
+            size = int(raw_size)
+            if size > 65_536 or config_bytes + size > 1_000_000 or len(configs) >= 64:
+                raise IngestionError("Repository configuration exceeds the safe data budget.")
+            try:
+                configs[path] = git_read(repo, "cat-file", "blob", object_id.decode()).decode(
+                    "utf-8"
+                )
+            except UnicodeError as exc:
+                raise IngestionError("Repository configuration must be UTF-8 text.") from exc
+            config_bytes += size
+            continue
         language = LANGUAGES.get(Path(path).suffix)
         if language is None:
             skip("unsupported_language")
@@ -246,4 +264,4 @@ def read_sources(repo: Path, limits: Settings) -> RepositorySource:
             continue
         total += size
         files.append(SourceFile(path, language, decoded))
-    return RepositorySource(sha, files, skipped)
+    return RepositorySource(sha, files, skipped, configs)

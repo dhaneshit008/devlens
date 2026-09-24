@@ -13,13 +13,16 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, Res
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, text, update
 from starlette.middleware.base import RequestResponseEndpoint
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from devlens import __version__
 from devlens.analysis import analyze
+from devlens.architecture_api import create_architecture_router
 from devlens.config import settings
 from devlens.impact import ImpactReport, impact
 from devlens.ingestion import IngestionError, canonical_url, clone_public, read_sources
 from devlens.models import Snapshot
+from devlens.queries import GraphPage, search_nodes
 from devlens.storage import AnalysisRun, Session, engine
 
 logger = logging.getLogger("devlens")
@@ -43,6 +46,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="DevLens", version=__version__, lifespan=lifespan)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
 
 
 @app.middleware("http")
@@ -227,40 +231,51 @@ def export_snapshot(run_id: str) -> Snapshot:
     return get_snapshot(run_id)
 
 
-@app.get("/api/v1/analysis/{run_id}/graph")
+@app.get("/api/v1/analysis/{run_id}/graph", response_model=GraphPage)
 def graph(
     run_id: str,
-    q: str = "",
+    q: Annotated[str, Query(max_length=300)] = "",
     kind: str = "",
     language: str = "",
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=500)] = 150,
-) -> dict[str, Any]:
+) -> GraphPage:
     snapshot = get_snapshot(run_id)
+    try:
+        candidates = search_nodes(snapshot, q)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     matches = [
         node
-        for node in snapshot.nodes
-        if (not kind or node.kind == kind)
-        and (not language or node.language == language)
-        and q.lower() in (node.path + " " + node.label).lower()
+        for node in candidates
+        if (not kind or node.kind == kind) and (not language or node.language == language)
     ]
     visible = matches[offset : offset + limit]
     ids = {node.id for node in visible}
-    return {
-        "nodes": visible,
-        "edges": [edge for edge in snapshot.edges if edge.source in ids and edge.target in ids],
-        "total": len(matches),
-        "offset": offset,
-        "limit": limit,
-        "truncated": offset + limit < len(matches),
-        "commit_sha": snapshot.commit_sha,
-        "limitations": snapshot.limitations,
-    }
+    return GraphPage(
+        nodes=visible,
+        edges=[edge for edge in snapshot.edges if edge.source in ids and edge.target in ids],
+        total=len(matches),
+        offset=offset,
+        limit=limit,
+        truncated=offset + limit < len(matches),
+        commit_sha=snapshot.commit_sha,
+        limitations=snapshot.limitations[:100],
+        limitations_total=len(snapshot.limitations),
+    )
 
 
 @app.get("/api/v1/analysis/{run_id}/impact", response_model=ImpactReport)
-def change_impact(run_id: str, target: str) -> ImpactReport:
+def change_impact(
+    run_id: str,
+    target: str,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 100,
+) -> ImpactReport:
     try:
-        return impact(get_snapshot(run_id), target)
+        return impact(get_snapshot(run_id), target, offset, limit)
     except KeyError as exc:
         raise HTTPException(404, "Target node not found.") from exc
+
+
+app.include_router(create_architecture_router(get_snapshot))

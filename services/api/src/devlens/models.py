@@ -4,12 +4,20 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from devlens.architecture_models import ArchitectureResult
+
+
+class SourceLine(BaseModel):
+    number: int
+    text: str
+
 
 class Evidence(BaseModel):
     path: str
     start_line: int = Field(ge=1)
     end_line: int = Field(ge=1)
     method: str
+    snippet: list[SourceLine] = Field(default_factory=list)
 
 
 class GraphNode(BaseModel):
@@ -28,6 +36,7 @@ class GraphEdge(BaseModel):
     target: str
     kind: Literal["contains", "imports"]
     evidence: Evidence
+    specifier: str | None = None
 
 
 class Limitation(BaseModel):
@@ -35,6 +44,7 @@ class Limitation(BaseModel):
     line: int
     reason: str
     specifier: str | None = None
+    category: str = "unresolved_import"
 
 
 class Snapshot(BaseModel):
@@ -49,3 +59,5 @@ class Snapshot(BaseModel):
     limitations: list[Limitation]
     source_file_count: int
     analyzed_bytes: int
+    architecture: ArchitectureResult | None = None
+    metrics: dict[str, int] = Field(default_factory=dict)

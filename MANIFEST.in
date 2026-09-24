@@ -1,0 +1,4 @@
+include alembic.ini requirements.lock
+recursive-include services/api/migrations *.py *.mako
+recursive-include tests *.py
+recursive-include scripts *.py

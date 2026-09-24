@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -45,4 +46,61 @@ def fixture_repo(tmp_path: Path) -> Path:
         ],
     ):
         subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, env=env)
+    return repo
+
+
+@pytest.fixture
+def architecture_repo(tmp_path: Path) -> Path:
+    repo = tmp_path / "architecture"
+    repo.mkdir()
+    files = {
+        "frontend/view.ts": "import '../api/handler';\nexport const View = () => 1;\n",
+        "frontend/shared.ts": "export const shared = 1;\n",
+        "api/handler.ts": "import '../domain/service';\n",
+        "domain/service.ts": "import '../frontend/shared';\nimport '@/repository/store';\n",
+        "repository/store.ts": "export function save() { return 1; }\n",
+        "domain/a.ts": "import './b';\n",
+        "domain/b.ts": "import './c';\n",
+        "domain/c.ts": "import './a';\n",
+        "tests/service.test.ts": "import '../domain/service';\n",
+        "tsconfig.json": json.dumps({"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["*"]}}}),
+        ".devlens.json": json.dumps(
+            {
+                "architecture": {
+                    "layers": {
+                        name: [name + "/**"]
+                        for name in ("frontend", "api", "domain", "repository", "tests")
+                    },
+                    "rules": [
+                        {"id": "frontend-boundary", "from": "frontend", "allow": ["api"]},
+                        {"id": "api-boundary", "from": "api", "allow": ["domain"]},
+                        {"id": "domain-boundary", "from": "domain", "deny": ["frontend"]},
+                    ],
+                }
+            }
+        ),
+    }
+    for name, content in files.items():
+        path = repo / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    for args in (
+        ["init"],
+        ["add", "."],
+        [
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-m",
+            "architecture fixture",
+        ],
+    ):
+        subprocess.run(
+            ["git", "-C", str(repo), *args],
+            check=True,
+            capture_output=True,
+            env={**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull},
+        )
     return repo
