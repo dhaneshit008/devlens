@@ -18,3 +18,17 @@ Zero consumers means none were found in the analyzed graph. It does not establis
 safety: unresolved imports, skipped files, runtime dispatch and external consumers can
 hide dependencies. Direct imports establish a source relationship, not that every edit
 to the imported module affects the consumer. There are no AI confidence percentages.
+
+## v0.5 architecture context and response bounds
+
+Impact now includes known layers touched by the target/reachable consumers, existing
+cycle groups and existing violation IDs intersecting that surface, plus the selected
+file's outgoing direct dependency paths. These are existing relationships, not newly
+predicted violations. Incoming dependents and outgoing dependencies retain distinct labels.
+
+`offset`/`limit` page the breadth-first result (maximum 100). `direct_count`,
+`indirect_count`, `total`, candidate tests and architecture context refer to the whole
+reachable graph, not just the page. Each shortest evidence path is capped at 200 hops,
+with a 4,000-edge aggregate response budget; `path_truncated` explicitly signals an
+incomplete path. Export the snapshot for full graph inspection. Predecessor indexes
+avoid constructing quadratic copies of every path before paging.

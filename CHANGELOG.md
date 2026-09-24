@@ -1,6 +1,23 @@
 # Changelog
 
-## Unreleased — v0.4.0 scope
+## Unreleased — v0.5.0 scope
+
+- Added strict data-only architecture configuration, explainable file layers, observed
+  layer dependencies, rule violations and deterministic file/directory cycle witnesses.
+- Added Architecture map/tables, filters, cycle inspection, side-by-side source evidence,
+  factual summary counts and categorized limitations with explicit unknown states.
+- Added static unshadowed CommonJS and TypeScript import-equals extraction, safe tsconfig
+  path aliases/baseUrl and conservative Python package/namespace resolution.
+- Added structured graph search, paginated dependency queries and bounded impact paths,
+  with affected architecture context and clear incoming/outgoing semantics.
+- Persisted schema-v2 architecture results and bounded source excerpts while preserving
+  legacy graph/impact reads; no relational migration required.
+- Hardened Host validation, bound delete confirmation to its analysis, enabled failed-run
+  cleanup, mobile history selection and keyboard graph selection.
+- Added deterministic architecture fixtures and backend, component and browser coverage.
+  See BUILD_REPORT.md for measured results and environment limits.
+
+## Previous development scope — v0.4.0
 
 - Foundation: monorepo, safe public Git ingestion, supported-language detection,
   PostgreSQL/SQLite persistence, Alembic migrations and local Docker configuration.

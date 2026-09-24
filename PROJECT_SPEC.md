@@ -19,17 +19,28 @@ then inspect the potential consequences of a change. No LLM key is required.
    A symbol selection conservatively uses its containing file; label this explicitly.
 7. Support reproducible local development, PostgreSQL migrations, tests and CI.
 
+## Phase 2: v0.5 Architecture Intelligence
+
+Add strict repository-defined `.devlens.json` layers and allow/deny policies, conservative
+classification evidence, resolved-import violations, file/directory SCCs with real closed
+witnesses, directed architecture maps, side-by-side source evidence and categorized
+limitations. Improve static CommonJS, safe tsconfig aliases/baseUrl and Python packages.
+All views share one persisted, versioned snapshot. Preserve consumer → dependency
+semantics, expose uncertainty and never fabricate metrics, severity or runtime effects.
+
 ## Acceptance
 
 Enter a public URL → observe progress → inspect a committed snapshot → select a file
 or declaration → inspect direct/indirect dependents and their evidence. Tests use
 deterministic fixture repositories. Counts must come from actual analysis. Empty,
-partial, unsupported and failed results must be distinct. Delete persisted analysis.
+partial, unsupported and failed results must be distinct. Delete persisted analysis. Open Architecture, inspect configured/inferred layers, drill
+into a violation and cycle edge, then inspect affected layers/cycles/rules during impact.
+An explicit deterministic architecture fixture verifies this workflow.
 
 ## Boundaries
 
 This is a local, single-user MVP. Hosted authentication, private repositories, runtime
-call graphs, alias-aware resolution, risk predictions, health scores, historical
+call graphs, complete module-resolution semantics, risk predictions, health scores, historical
 intelligence, AI explanations and GitHub automation are later milestones. No fabricated
 charts or placeholder navigation. Import reachability is a possible change surface,
 not a guarantee that a change breaks code. Tests inferred from file names are candidates,

@@ -18,3 +18,14 @@ exploits before a fix can be coordinated. No response SLA is promised by this ea
 
 See docs/privacy-architecture.md for stored data and deletion behavior. CodeQL, dependency
 review and Dependabot are configured; their presence is not a claim that all code is secure.
+
+Architecture JSON and tsconfig JSONC are read from bounded regular Git blobs and parsed
+only as data. Invalid architecture rules fail explicitly; unsupported tsconfig inheritance
+is reported as a limitation. Host headers are allowlisted (`localhost`, `127.0.0.1`) in
+addition to same-origin checks, including when an attacker supplies matching Host/Origin.
+This does not provide user authentication. Configure `ALLOWED_HOSTS` as a JSON array only
+for trusted deployment hostnames; keep loopback binding for local use.
+
+Schema-v2 source excerpts may contain sensitive material already present in a public
+repository. Keep the analysis database and exports under the same access restrictions as
+source data; deleting a run does not remove backups or previously downloaded exports.

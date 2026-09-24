@@ -2,7 +2,7 @@
 
 **Repository Digital Twin & Engineering Intelligence**
 
-See your codebase. Understand its past. Predict the impact of its future.
+See your codebase. Inspect its architecture. Trace the potential impact of a change.
 
 DevLens maps a repository's files, declarations and imports at a specific Git commit.
 Select a file to trace its direct consumers, transitive dependents and candidate tests,
@@ -13,26 +13,34 @@ then inspect the source lines behind every relationship. It works without an AI 
 *Actual product UI using the test-only `devlens-fixtures/mini-repo` fixture. The fixture
 URL is an isolated browser-test adapter, not a published GitHub repository or production analysis.*
 
-**Status:** early local MVP covering the v0.1–v0.4 workflow. History intelligence,
-architecture rules, risk models and AI interpretation are planned. Static reachability
+[Architecture map](docs/assets/architecture-map.png) ·
+[Violation source evidence](docs/assets/architecture-evidence.png) show the real v0.5 UI
+using the separate deterministic architecture fixture, including its intentional violation.
+
+**Status:** v0.5 architecture-intelligence development build, preserving the v0.1–v0.4
+workflow. History intelligence, risk models and hosted collaboration remain planned. Static reachability
 shows a potential change surface; it does not predict that a change will break code.
 
 ## What works
 
 - Public GitHub ingestion with URL allowlisting, isolated Git and bounded resources.
-- TypeScript/TSX and JavaScript/JSX declarations and literal ES imports through Tree-sitter.
+- TypeScript/TSX and JavaScript/JSX declarations and literal ES/CommonJS imports through Tree-sitter.
 - Python classes, functions, methods and imports through the standard AST parser.
 - A persisted, commit-pinned graph with file/declaration nodes and containment/import edges.
 - Search, language/type filters, graph pan/zoom, node details, source links, list view,
   dark/light themes and paginated graph rendering.
-- Direct and transitive impact with shortest evidence paths and filename-based candidate tests.
+- Direct and transitive impact with bounded shortest evidence paths, affected layers/cycles/rules
+  and filename-based candidate tests.
+- Repository-defined architecture rules, explainable layers, directed layer maps, cycle witnesses
+  and violations with side-by-side, commit-pinned source evidence.
+- Safe tsconfig aliases/baseUrl, conservative Python package resolution and structured search.
 - Analysis progress, explicit failures, coverage limitations, JSON export and deletion.
 - PostgreSQL migrations, a SQLite local mode, tests and GitHub Actions workflows.
 
 ## Quick start with Docker
 
 ```sh
-git clone --branch feat/devlens-mvp https://github.com/dhaneshit008/devlens.git
+git clone https://github.com/dhaneshit008/devlens.git
 cd devlens
 cp .env.example .env
 docker compose up --build
@@ -71,6 +79,8 @@ On Windows use `.venv\Scripts\Activate.ps1` instead of `source`. Without `DATABA
 local development uses `devlens.db` in the working directory. PostgreSQL uses
 `postgresql+psycopg://user@host:5432/database`; put any password in an environment variable,
 never in Git. Run migrations after setting the database URL. Use exactly one API worker.
+Develop and deploy from this repository checkout. The Python wheel contains the backend
+package; it is not a standalone distribution of the web application or migration runner.
 
 ## Reproduce an analysis locally
 
@@ -119,6 +129,7 @@ snapshot commit SHA. Selecting a symbol currently analyzes its **containing file
 DevLens does not claim symbol-level runtime precision.
 
 Supported source is bounded to 2,000 files, 500 KB per file and 20 MB total by default.
+New snapshots retain bounded source excerpts; see [privacy](docs/privacy-architecture.md).
 Clone storage is limited to approximately 200 MB and clone time to 90 seconds. Large
 graphs are rejected rather than silently truncated; graph pages show at most 100 nodes
 in the UI. See [analysis methodology](docs/analysis-engine.md) for all resolution limits.
@@ -130,6 +141,7 @@ invented. Unresolved imports, parse errors and skipped files remain visible.
 
 - [Product specification](PROJECT_SPEC.md) · [Architecture](ARCHITECTURE.md) · [Roadmap](ROADMAP.md)
 - [Analysis engine](docs/analysis-engine.md) · [Digital twin](docs/digital-twin.md) · [Change impact](docs/change-impact.md)
+- [Architecture intelligence and rule syntax](docs/architecture-intelligence.md)
 - [API](docs/api.md) · [Local development](docs/local-development.md) · [Deployment](docs/deployment.md)
 - [Privacy](docs/privacy-architecture.md) · [Scoring policy](docs/scoring-methodology.md)
 - [Architecture decisions](docs/adr/0001-core-decisions.md) · [Changelog](CHANGELOG.md)

@@ -1,7 +1,10 @@
 # Repository digital twin
 
-Schema v1 contains commit identity, analyzer version, source counts, file and declaration
+Schema v2 retains commit identity, analyzer version, source counts, file and declaration
 nodes, typed edges, line evidence, language counts, skipped-entry counts and limitations.
+It additionally stores bounded source excerpts, architecture assignments/rules, violations,
+cycle witnesses and factual metrics. Schema-v1 remains readable; architecture requests
+require reanalysis rather than silently upgrading historical interpretations.
 PostgreSQL stores the bounded graph as a JSON document on its analysis run. This keeps
 snapshot replacement atomic. It is an initial model, not a general graph database.
 
